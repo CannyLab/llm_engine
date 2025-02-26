@@ -18,6 +18,18 @@ logger = logging.getLogger(__name__)
 
 LLMS = [
     {
+        "model_name": "gemini-1.5-flash",
+        "api_provider": "google",
+        "is_instruct": True,
+        "is_reasoning": False,
+    },
+    {
+        "model_name": "gemini-2.0   -flash",
+        "api_provider": "google",
+        "is_instruct": True,
+        "is_reasoning": False,
+    },
+    {
         "model_name": "gpt-4o",
         "api_provider": "openai",
         "is_instruct": True,
@@ -140,7 +152,12 @@ class LLMEngine:
                     base_url="https://api.deepseek.com",
                 )
                 model = model_name
-                self.stop = self.stop
+            elif self.api_provider == "google":  # google
+                self.client = OpenAI(
+                    api_key=os.environ.get("GOOGLE_API_KEY"),
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                )
+                model = model_name
             else:
                 raise ValueError(f"Invalid API provider: {self.api_provider}")
 
@@ -314,7 +331,6 @@ class LLMEngine:
                 ],
                 max_tokens=max_tokens,
                 temperature=temperature,
-                stop=stop,
                 top_p=top_p,
                 n=n,
                 logprobs=logprobs,
@@ -330,7 +346,6 @@ class LLMEngine:
                 ],
                 max_tokens=max_tokens,
                 temperature=temperature,
-                stop=stop,
                 top_p=top_p,
                 n=n,
                 extra_headers={"min_p": f"{min_p}"},
@@ -375,14 +390,12 @@ class LLMEngine:
         top_p = self.config.top_p
         logprobs = self.config.logprobs
         min_p = self.config.min_p
-
         if logprobs > 0:
             return self.client.chat.completions.create(
                 model=model_name,
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                stop=stop,
                 top_p=top_p,
                 n=n,
                 logprobs=logprobs,
@@ -395,7 +408,6 @@ class LLMEngine:
                 messages=messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                stop=stop,
                 top_p=top_p,
                 n=n,
                 extra_headers={"min_p": f"{min_p}"},
