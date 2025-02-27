@@ -24,7 +24,7 @@ LLMS = [
         "is_reasoning": False,
     },
     {
-        "model_name": "gemini-2.0   -flash",
+        "model_name": "gemini-2.0-flash",
         "api_provider": "google",
         "is_instruct": True,
         "is_reasoning": False,
