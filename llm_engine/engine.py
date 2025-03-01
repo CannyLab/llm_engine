@@ -438,3 +438,20 @@ class LLMEngine:
                     desc=f"Running {f.__name__} with {self.model_name_str}",
                 )
             )
+
+    def get_model_name(self):
+        return self.model_name_str
+    
+    def __repr__(self) -> str:
+        return (
+            f"LLMEngine("
+            f"model_name='{self.model_name_str}', "
+            f"api_provider='{self.api_provider}', "
+            f"is_instruct={self.is_instruct}, "
+            f"is_reasoning={self.is_reasoning}, "
+            f"max_tokens={self.config.max_tokens}, "
+            f"temperature={self.config.temperature}, "
+            f"top_p={self.config.top_p}, "
+            f"min_p={self.config.min_p}"
+            f")"
+        )
