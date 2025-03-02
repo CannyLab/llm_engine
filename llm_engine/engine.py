@@ -453,6 +453,12 @@ class LLMEngine:
             f")"
         )
     
+    def __getattr__(self, name):
+        config_attrs = {'temperature', 'top_p', 'max_tokens', 'min_p', 'stop', 'logprobs', 'echo'}
+        if name in config_attrs:
+            return getattr(self.config, name)
+        raise AttributeError(f"No attribute '{name}'")
+    
     @property
     def model_name(self):
         return self.model_name_str
@@ -470,34 +476,5 @@ class LLMEngine:
         return self.is_reasoning
     
     @property
-    def max_tokens(self):
-        return self.config.max_tokens
-    
-    @property
-    def temperature(self):
-        return self.config.temperature
-    
-    @property
-    def top_p(self):
-        return self.config.top_p
-    
-    @property
-    def min_p(self):
-        return self.config.min_p
-    
-    @property
-    def stop(self):
-        return self.config.stop
-    
-    @property
-    def logprobs(self):
-        return self.config.logprobs
-    
-    @property
-    def echo(self):
-        return self.config.echo
-    
-    @property
     def config(self):
         return self.config
-    
