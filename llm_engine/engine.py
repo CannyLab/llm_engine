@@ -1,12 +1,11 @@
 import logging
 from multiprocessing import pool
-from time import time, sleep  # Import sleep from the time module
+from time import sleep  # Import sleep from the time module
 import random
 import os
 from typing import Any, Callable, Collection, Optional, Type, TypeVar
 
 from openai import AuthenticationError, BadRequestError, OpenAI
-from tiktoken import get_encoding
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
@@ -169,13 +168,13 @@ class LLMEngine:
                 "meta-llama/Llama-3.1-70B-Instruct"
             )
 
-    def reinitialize(self):
+    def reinitialize(self)->None:
         self.prepare_llm(
             model_name=self.model_name,
             port=self.config.port,
         )
 
-    def update_config(self, **kwargs):
+    def update_config(self, **kwargs)->None:
         for key, value in kwargs.items():
             setattr(self.config, key, value)
             # for each key, value in kwargs
