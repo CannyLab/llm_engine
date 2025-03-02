@@ -460,21 +460,21 @@ class LLMEngine:
         raise AttributeError(f"No attribute '{name}'")
     
     @property
-    def model_name(self):
+    def model_name(self)->str:
         return self.model_name_str
     
     @property
-    def api_provider(self):
+    def api_provider(self)->str:
         return self.api_provider
     
     @property
-    def is_instruct(self):
+    def is_instruct(self)->bool:
         return self.is_instruct
     
     @property
-    def is_reasoning(self):
+    def is_reasoning(self)->bool:
         return self.is_reasoning
     
     @property
-    def config(self):
+    def config(self)->Type[LLMConfig]:
         return self.config
