@@ -438,9 +438,6 @@ class LLMEngine:
                     desc=f"Running {f.__name__} with {self.model_name_str}",
                 )
             )
-
-    def get_model_name(self):
-        return self.model_name_str
     
     def __repr__(self) -> str:
         return (
@@ -455,3 +452,52 @@ class LLMEngine:
             f"min_p={self.config.min_p}"
             f")"
         )
+    
+    @property
+    def model_name(self):
+        return self.model_name_str
+    
+    @property
+    def api_provider(self):
+        return self.api_provider
+    
+    @property
+    def is_instruct(self):
+        return self.is_instruct
+    
+    @property
+    def is_reasoning(self):
+        return self.is_reasoning
+    
+    @property
+    def max_tokens(self):
+        return self.config.max_tokens
+    
+    @property
+    def temperature(self):
+        return self.config.temperature
+    
+    @property
+    def top_p(self):
+        return self.config.top_p
+    
+    @property
+    def min_p(self):
+        return self.config.min_p
+    
+    @property
+    def stop(self):
+        return self.config.stop
+    
+    @property
+    def logprobs(self):
+        return self.config.logprobs
+    
+    @property
+    def echo(self):
+        return self.config.echo
+    
+    @property
+    def config(self):
+        return self.config
+    
