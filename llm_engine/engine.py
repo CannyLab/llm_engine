@@ -1,12 +1,11 @@
 import logging
 from multiprocessing import pool
-from time import time, sleep  # Import sleep from the time module
+from time import sleep  # Import sleep from the time module
 import random
 import os
 from typing import Any, Callable, Collection, Optional, Type, TypeVar
 
 from openai import AuthenticationError, BadRequestError, OpenAI
-from tiktoken import get_encoding
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
@@ -169,13 +168,13 @@ class LLMEngine:
                 "meta-llama/Llama-3.1-70B-Instruct"
             )
 
-    def reinitialize(self):
+    def reinitialize(self)->None:
         self.prepare_llm(
             model_name=self.model_name,
             port=self.config.port,
         )
 
-    def update_config(self, **kwargs):
+    def update_config(self, **kwargs)->None:
         for key, value in kwargs.items():
             setattr(self.config, key, value)
             # for each key, value in kwargs
@@ -438,3 +437,43 @@ class LLMEngine:
                     desc=f"Running {f.__name__} with {self.model_name_str}",
                 )
             )
+    
+    def __repr__(self) -> str:
+        return (
+            f"LLMEngine("
+            f"model_name='{self.model_name_str}', "
+            f"api_provider='{self.api_provider}', "
+            f"is_instruct={self.is_instruct}, "
+            f"is_reasoning={self.is_reasoning}, "
+            f"max_tokens={self.config.max_tokens}, "
+            f"temperature={self.config.temperature}, "
+            f"top_p={self.config.top_p}, "
+            f"min_p={self.config.min_p}"
+            f")"
+        )
+    
+    def __getattr__(self, name):
+        config_attrs = {'temperature', 'top_p', 'max_tokens', 'min_p', 'stop', 'logprobs', 'echo'}
+        if name in config_attrs:
+            return getattr(self.config, name)
+        raise AttributeError(f"No attribute '{name}'")
+    
+    @property
+    def model_name(self)->str:
+        return self.model_name_str
+    
+    @property
+    def api_provider(self)->str:
+        return self.api_provider
+    
+    @property
+    def is_instruct(self)->bool:
+        return self.is_instruct
+    
+    @property
+    def is_reasoning(self)->bool:
+        return self.is_reasoning
+    
+    @property
+    def config(self)->Type[LLMConfig]:
+        return self.config
