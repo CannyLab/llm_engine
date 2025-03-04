@@ -18,7 +18,7 @@ class LLMConfig:
     max_tokens: int = 2048
     temperature: float = 1.0
     stop: list[str] = field(default_factory=list)
-    top_p: float = 0.99
+    top_p: float = 1.0
     min_p: float = 0.0
     echo: bool = False
     port: int = 8000
