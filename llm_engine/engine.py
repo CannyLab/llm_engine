@@ -99,15 +99,15 @@ LLMS = [
 
 class LLMEngine:
     def __init__(self, llm_config: LLMConfig) -> None:
-        self.config = llm_config
+        self._config = llm_config
         self.prepare_llm(
             model_name=llm_config.model_name,
             port=llm_config.port,
         )
-        logger.info(f"Initialized LLM Engine with model: {self.model_name_str}")
-        logger.info(f"API Provider: {self.api_provider}")
-        logger.info(f"is_instruct: {self.is_instruct}")
-        logger.info(f"is_reasoning: {self.is_reasoning}")
+        logger.info(f"Initialized LLM Engine with model: {self._model_name_str}")
+        logger.info(f"API Provider: {self._api_provider}")
+        logger.info(f"is_instruct: {self._is_instruct}")
+        logger.info(f"is_reasoning: {self._is_reasoning}")
 
     def prepare_llm(self, model_name: str, port: int) -> str:
         if "localhost" == model_name:
@@ -118,53 +118,53 @@ class LLMEngine:
             # get model name
             models = self.client.models.list()
             model = next(iter(models)).id
-            self.model_name_str = model.split("/")[-1]
+            self._model_name_str = model.split("/")[-1]
 
             llm = next((llm for llm in LLMS if llm["model_name"] == model), None)
-            self.model_name = model
-            self.api_provider = "localhost"
+            self._model_name = model
+            self._api_provider = "localhost"
             if llm is None:
                 logger.error(f"Unrecognized local model: {model}")
-                self.is_instruct = False
-                self.is_reasoning = False
+                self._is_instruct = False
+                self._is_reasoning = False
             else:
-                self.is_instruct = llm["is_instruct"]
-                self.is_reasoning = llm["is_reasoning"]
+                self._is_instruct = llm["is_instruct"]
+                self._is_reasoning = llm["is_reasoning"]
         else:
             # get match in LLMS
             llm = next((llm for llm in LLMS if llm["model_name"] == model_name), None)
             if llm is None:
                 raise ValueError(f"Invalid model name: {model_name}")
             model = llm["model_name"]
-            self.model_name = model
-            self.model_name_str = model.split("/")[-1]
-            self.api_provider = llm["api_provider"]
-            self.is_instruct = llm["is_instruct"]
-            self.is_reasoning = llm["is_reasoning"]
-            if self.api_provider == "openai":  # openai
+            self._model_name = model
+            self._model_name_str = model.split("/")[-1]
+            self._api_provider = llm["api_provider"]
+            self._is_instruct = llm["is_instruct"]
+            self._is_reasoning = llm["is_reasoning"]
+            if self._api_provider == "openai":  # openai
                 self.client = OpenAI(
                     api_key=os.environ.get("OPENAI_API_KEY"),
                     base_url="https://api.openai.com/v1",
                 )
                 model = model_name
-                if self.config.stop:
-                    if len(self.config.stop) > 4:
-                        self.config.stop = self.config.stop[:4]
+                if self._config.stop:
+                    if len(self._config.stop) > 4:
+                        self._config.stop = self._config.stop[:4]
 
-            elif self.api_provider == "deepseek":  # deepseek
+            elif self._api_provider == "deepseek":  # deepseek
                 self.client = OpenAI(
                     api_key=os.environ.get("DEEPSEEK_API_KEY"),
                     base_url="https://api.deepseek.com",
                 )
                 model = model_name
-            elif self.api_provider == "google":  # google
+            elif self._api_provider == "google":  # google
                 self.client = OpenAI(
                     api_key=os.environ.get("GOOGLE_API_KEY"),
                     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
                 )
                 model = model_name
             else:
-                raise ValueError(f"Invalid API provider: {self.api_provider}")
+                raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -176,13 +176,13 @@ class LLMEngine:
 
     def reinitialize(self)->None:
         self.prepare_llm(
-            model_name=self.model_name,
-            port=self.config.port,
+            model_name=self._model_name,
+            port=self._config.port,
         )
 
     def update_config(self, **kwargs)->None:
         for key, value in kwargs.items():
-            setattr(self.config, key, value)
+            setattr(self._config, key, value)
             # for each key, value in kwargs
             logging.info(f"Updated config: {key} = {value}")
 
@@ -236,12 +236,12 @@ class LLMEngine:
         n=1,
     ):
         try:
-            if self.is_reasoning:
+            if self._is_reasoning:
                 assert isinstance(model_prompt, str)
                 return self.prompt_llm_reasoning_auto(
                     model_prompt=model_prompt, system_prompt=system_prompt, n=n
                 )
-            if not self.is_instruct:
+            if not self._is_instruct:
                 assert isinstance(model_prompt, str)
                 return self.prompt_llm(prompt=model_prompt, n=n)
             else:
@@ -272,14 +272,14 @@ class LLMEngine:
         n=1,
     ):
         assert n >= 1
-        model_name = self.model_name
-        max_tokens = self.config.max_tokens
-        temperature = self.config.temperature
-        stop = self.config.stop
-        logprobs = self.config.logprobs
-        top_p = self.config.top_p
-        min_p = self.config.min_p
-        echo = self.config.echo
+        model_name = self._model_name
+        max_tokens = self._config.max_tokens
+        temperature = self._config.temperature
+        stop = self._config.stop
+        logprobs = self._config.logprobs
+        top_p = self._config.top_p
+        min_p = self._config.min_p
+        echo = self._config.echo
 
         if logprobs > 0:
             return self.client.completions.create(
@@ -319,13 +319,13 @@ class LLMEngine:
         n=1,
     ):
         assert n >= 1
-        model_name = self.model_name
-        max_tokens = self.config.max_tokens
-        temperature = self.config.temperature
-        stop = self.config.stop
-        top_p = self.config.top_p
-        logprobs = self.config.logprobs
-        min_p = self.config.min_p
+        model_name = self._model_name
+        max_tokens = self._config.max_tokens
+        temperature = self._config.temperature
+        stop = self._config.stop
+        top_p = self._config.top_p
+        logprobs = self._config.logprobs
+        min_p = self._config.min_p
 
         if logprobs > 0:
             return self.client.chat.completions.create(
@@ -367,7 +367,7 @@ class LLMEngine:
         n=1,
     ):
         assert n >= 1
-        model_name = self.model_name
+        model_name = self._model_name
 
         return self.client.chat.completions.create(
             model=model_name,
@@ -388,13 +388,13 @@ class LLMEngine:
         n=1,
     ):
         assert n >= 1
-        model_name = self.model_name
-        max_tokens = self.config.max_tokens
-        temperature = self.config.temperature
-        stop = self.config.stop
-        top_p = self.config.top_p
-        logprobs = self.config.logprobs
-        min_p = self.config.min_p
+        model_name = self._model_name
+        max_tokens = self._config.max_tokens
+        temperature = self._config.temperature
+        stop = self._config.stop
+        top_p = self._config.top_p
+        logprobs = self._config.logprobs
+        min_p = self._config.min_p
         if logprobs > 0:
             return self.client.chat.completions.create(
                 model=model_name,
@@ -440,43 +440,46 @@ class LLMEngine:
                         parallel_case_ids,
                     ),
                     total=len(parallel_case_ids),
-                    desc=f"Running {f.__name__} with {self.model_name_str}",
+                    desc=f"Running {f.__name__} with {self._model_name_str}",
                 )
             )
     
     def __repr__(self) -> str:
         return (
             f"LLMEngine("
-            f"model_name='{self.model_name_str}', "
-            f"api_provider='{self.api_provider}', "
-            f"is_instruct={self.is_instruct}, "
-            f"is_reasoning={self.is_reasoning}, "
-            f"max_tokens={self.config.max_tokens}, "
-            f"temperature={self.config.temperature}, "
-            f"top_p={self.config.top_p}, "
-            f"min_p={self.config.min_p}"
+            f"model_name='{self._model_name_str}', "
+            f"api_provider='{self._api_provider}', "
+            f"is_instruct={self._is_instruct}, "
+            f"is_reasoning={self._is_reasoning}, "
+            f"max_tokens={self._config.max_tokens}, "
+            f"temperature={self._config.temperature}, "
+            f"top_p={self._config.top_p}, "
+            f"min_p={self._config.min_p}"
             f")"
         )
     
     def __getattr__(self, name):
         config_attrs = {'temperature', 'top_p', 'max_tokens', 'min_p', 'stop', 'logprobs', 'echo'}
         if name in config_attrs:
-            return getattr(self.config, name)
+            return getattr(self._config, name)
         raise AttributeError(f"No attribute '{name}'")
     
-    # @property
-    # def model_name(self)->str:
-    #     return self.model_name_str
+    @property
+    def model_name(self)->str:
+        return self._model_name_str
     
-    # @property
-    # def api_provider(self)->str:
-    #     return self.api_provider
+    @property
+    def api_provider(self)->str:
+        return self._api_provider
     
-    # @property
-    # def is_instruct(self)->bool:
-    #     return self.is_instruct
+    @property
+    def is_instruct(self)->bool:
+        return self._is_instruct
     
-    # @property
-    # def is_reasoning(self)->bool:
-    #     return self.is_reasoning
+    @property
+    def is_reasoning(self)->bool:
+        return self._is_reasoning
     
+    @property
+    def config(self)->Type[LLMConfig]:
+        return self._config
