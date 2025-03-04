@@ -29,6 +29,12 @@ LLMS = [
         "is_reasoning": False,
     },
     {
+        "model_name": "gemini-2.0-pro-exp-02-05",
+        "api_provider": "google",
+        "is_instruct": True,
+        "is_reasoning": False,
+    },
+    {
         "model_name": "gpt-4o",
         "api_provider": "openai",
         "is_instruct": True,
@@ -458,22 +464,19 @@ class LLMEngine:
             return getattr(self.config, name)
         raise AttributeError(f"No attribute '{name}'")
     
-    @property
-    def model_name(self)->str:
-        return self.model_name_str
+    # @property
+    # def model_name(self)->str:
+    #     return self.model_name_str
     
-    @property
-    def api_provider(self)->str:
-        return self.api_provider
+    # @property
+    # def api_provider(self)->str:
+    #     return self.api_provider
     
-    @property
-    def is_instruct(self)->bool:
-        return self.is_instruct
+    # @property
+    # def is_instruct(self)->bool:
+    #     return self.is_instruct
     
-    @property
-    def is_reasoning(self)->bool:
-        return self.is_reasoning
+    # @property
+    # def is_reasoning(self)->bool:
+    #     return self.is_reasoning
     
-    @property
-    def config(self)->Type[LLMConfig]:
-        return self.config
