@@ -108,14 +108,16 @@ class DummyClient:
     def completions(self):
         return self
 
-    def __init__(self):
+    def __init__(self, dummy_message: str="(A) debug") -> None:
+        self.dummy_message = dummy_message
         self.chat = self
 
     def create(self, **kwargs):
+        dummy_message = self.dummy_message
         class DummyChoice:
             def __init__(self):
-                self.text = "(A) debug"
-                self.message = type('DummyMessage', (), {'content': "(A) debug"})()
+                self.text = dummy_message
+                self.message = type('DummyMessage', (), {'content': self.text})()
                 self.logprobs = None
 
         class DummyResponse:
