@@ -108,16 +108,17 @@ class DummyClient:
     def completions(self):
         return self
 
-    def __init__(self, dummy_message: str="(A) debug") -> None:
+    def __init__(self, dummy_message: str = "(A) debug") -> None:
         self.dummy_message = dummy_message
         self.chat = self
 
     def create(self, **kwargs):
         dummy_message = self.dummy_message
+
         class DummyChoice:
             def __init__(self):
                 self.text = dummy_message
-                self.message = type('DummyMessage', (), {'content': self.text})()
+                self.message = type("DummyMessage", (), {"content": self.text})()
                 self.logprobs = None
 
         class DummyResponse:
@@ -302,7 +303,7 @@ class LLMEngine:
     def prompt_llm(
         self,
         prompt: str,
-        n: int=1,
+        n: int = 1,
     ):
         assert n >= 1
         model_name = self._model_name
