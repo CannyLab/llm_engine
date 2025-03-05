@@ -117,8 +117,7 @@ class DummyClient:
 
         class DummyChoice:
             def __init__(self):
-                self.text = dummy_message
-                self.message = type("DummyMessage", (), {"content": self.text})()
+                self.message = type("DummyMessage", (), {"content": dummy_message})()
                 self.logprobs = None
 
         class DummyResponse:
