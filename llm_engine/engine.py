@@ -71,6 +71,12 @@ LLMS = [
         "is_reasoning": False,
     },
     {
+        "model_name": "mistralai/Mistral-Small-24B-Instruct-2501",
+        "api_provider": "localhost",
+        "is_instruct": True,
+        "is_reasoning": False,
+    },
+    {
         "model_name": "meta-llama/Llama-3.1-70B-Instruct",
         "api_provider": "localhost",
         "is_instruct": True,
@@ -94,7 +100,37 @@ LLMS = [
         "is_instruct": True,
         "is_reasoning": True,
     },
+    {
+        "model_name": "dummy",
+        "api_provider": "dummy",
+        "is_instruct": False,
+        "is_reasoning": False,
+    },
 ]
+
+
+class DummyClient:
+    @property
+    def completions(self):
+        return self
+
+    def __init__(self, dummy_message: str = "(A) debug") -> None:
+        self.dummy_message = dummy_message
+        self.chat = self
+
+    def create(self, **kwargs):
+        dummy_message = self.dummy_message
+
+        class DummyChoice:
+            def __init__(self):
+                self.message = type("DummyMessage", (), {"content": dummy_message})()
+                self.logprobs = None
+
+        class DummyResponse:
+            def __init__(self):
+                self.choices = [DummyChoice()]
+
+        return DummyResponse()
 
 
 class LLMEngine:
@@ -109,7 +145,7 @@ class LLMEngine:
         logger.info(f"is_instruct: {self._is_instruct}")
         logger.info(f"is_reasoning: {self._is_reasoning}")
 
-    def prepare_llm(self, model_name: str, port: int) -> str:
+    def prepare_llm(self, model_name: str, port: int) -> None:
         if "localhost" == model_name:
             self.client = OpenAI(
                 api_key="EMPTY",
@@ -146,7 +182,7 @@ class LLMEngine:
                     api_key=os.environ.get("OPENAI_API_KEY"),
                     base_url="https://api.openai.com/v1",
                 )
-                model = model_name
+
                 if self._config.stop:
                     if len(self._config.stop) > 4:
                         self._config.stop = self._config.stop[:4]
@@ -156,13 +192,16 @@ class LLMEngine:
                     api_key=os.environ.get("DEEPSEEK_API_KEY"),
                     base_url="https://api.deepseek.com",
                 )
-                model = model_name
+
             elif self._api_provider == "google":  # google
                 self.client = OpenAI(
                     api_key=os.environ.get("GOOGLE_API_KEY"),
                     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
                 )
-                model = model_name
+
+            elif self._api_provider == "dummy":  # dummy
+                self.client = DummyClient()
+
             else:
                 raise ValueError(f"Invalid API provider: {self._api_provider}")
 
@@ -174,13 +213,13 @@ class LLMEngine:
                 "meta-llama/Llama-3.1-70B-Instruct"
             )
 
-    def reinitialize(self)->None:
+    def reinitialize(self) -> None:
         self.prepare_llm(
             model_name=self._model_name,
             port=self._config.port,
         )
 
-    def update_config(self, **kwargs)->None:
+    def update_config(self, **kwargs) -> None:
         for key, value in kwargs.items():
             setattr(self._config, key, value)
             # for each key, value in kwargs
@@ -268,8 +307,8 @@ class LLMEngine:
     )
     def prompt_llm(
         self,
-        prompt,
-        n=1,
+        prompt: str,
+        n: int = 1,
     ):
         assert n >= 1
         model_name = self._model_name
@@ -443,7 +482,7 @@ class LLMEngine:
                     desc=f"Running {f.__name__} with {self._model_name_str}",
                 )
             )
-    
+
     def __repr__(self) -> str:
         return (
             f"LLMEngine("
@@ -457,29 +496,37 @@ class LLMEngine:
             f"min_p={self._config.min_p}"
             f")"
         )
-    
+
     def __getattr__(self, name):
-        config_attrs = {'temperature', 'top_p', 'max_tokens', 'min_p', 'stop', 'logprobs', 'echo'}
+        config_attrs = {
+            "temperature",
+            "top_p",
+            "max_tokens",
+            "min_p",
+            "stop",
+            "logprobs",
+            "echo",
+        }
         if name in config_attrs:
             return getattr(self._config, name)
         raise AttributeError(f"No attribute '{name}'")
-    
+
     @property
-    def model_name(self)->str:
+    def model_name(self) -> str:
         return self._model_name_str
-    
+
     @property
-    def api_provider(self)->str:
+    def api_provider(self) -> str:
         return self._api_provider
-    
+
     @property
-    def is_instruct(self)->bool:
+    def is_instruct(self) -> bool:
         return self._is_instruct
-    
+
     @property
-    def is_reasoning(self)->bool:
+    def is_reasoning(self) -> bool:
         return self._is_reasoning
-    
+
     @property
-    def config(self)->Type[LLMConfig]:
+    def config(self) -> LLMConfig:
         return self._config
