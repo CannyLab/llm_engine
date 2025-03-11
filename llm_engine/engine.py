@@ -71,6 +71,12 @@ LLMS = [
         "is_reasoning": False,
     },
     {
+        "model_name": "mistralai/Mistral-Small-24B-Instruct-2501",
+        "api_provider": "localhost",
+        "is_instruct": True,
+        "is_reasoning": False,
+    },
+    {
         "model_name": "meta-llama/Llama-3.1-70B-Instruct",
         "api_provider": "localhost",
         "is_instruct": True,
