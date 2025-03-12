@@ -3,6 +3,8 @@ from multiprocessing import pool
 from time import sleep  # Import sleep from the time module
 import random
 import os
+import yaml
+from pathlib import Path
 from typing import Any, Callable, Collection, Optional, Type, TypeVar
 
 from openai import AuthenticationError, BadRequestError, OpenAI
@@ -14,99 +16,6 @@ from .config import LLMConfig
 Q = TypeVar("Q", bound=Callable[..., Any])
 
 logger = logging.getLogger(__name__)
-
-LLMS = [
-    {
-        "model_name": "gemini-1.5-flash",
-        "api_provider": "google",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "gemini-2.0-flash",
-        "api_provider": "google",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "gemini-2.0-pro-exp-02-05",
-        "api_provider": "google",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "gpt-4o",
-        "api_provider": "openai",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "gpt-4o-mini",
-        "api_provider": "openai",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "o3-mini",
-        "api_provider": "openai",
-        "is_instruct": True,
-        "is_reasoning": True,
-    },
-    {
-        "model_name": "deepseek-chat",
-        "api_provider": "deepseek",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "deepseek-reasoner",
-        "api_provider": "deepseek",
-        "is_instruct": True,
-        "is_reasoning": True,
-    },
-    {
-        "model_name": "mistralai/Mistral-Small-24B-Base-2501",
-        "api_provider": "localhost",
-        "is_instruct": False,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "mistralai/Mistral-Small-24B-Instruct-2501",
-        "api_provider": "localhost",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "meta-llama/Llama-3.1-70B-Instruct",
-        "api_provider": "localhost",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "meta-llama/Llama-3.3-70B-Instruct",
-        "api_provider": "localhost",
-        "is_instruct": True,
-        "is_reasoning": False,
-    },
-    {
-        "model_name": "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
-        "api_provider": "localhost",
-        "is_instruct": True,
-        "is_reasoning": True,
-    },
-    {
-        "model_name": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-        "api_provider": "localhost",
-        "is_instruct": True,
-        "is_reasoning": True,
-    },
-    {
-        "model_name": "dummy",
-        "api_provider": "dummy",
-        "is_instruct": False,
-        "is_reasoning": False,
-    },
-]
 
 
 class DummyClient:
@@ -136,14 +45,26 @@ class DummyClient:
 class LLMEngine:
     def __init__(self, llm_config: LLMConfig) -> None:
         self._config = llm_config
+        self._load_models()
         self.prepare_llm(
             model_name=llm_config.model_name,
             port=llm_config.port,
         )
+        
         logger.info(f"Initialized LLM Engine with model: {self._model_name_str}")
         logger.info(f"API Provider: {self._api_provider}")
         logger.info(f"is_instruct: {self._is_instruct}")
         logger.info(f"is_reasoning: {self._is_reasoning}")
+
+    def _load_models(self) -> None:
+        models_path = Path(__file__).parent.parent / "models" / "models.yaml"
+        try:
+            with open(models_path, 'r') as f:
+                models = yaml.safe_load(f)
+                self.model_list = models["models"]
+        except Exception as e:
+            logger.error(f"Error loading models.yaml: {e}")
+            self.model_list = []
 
     def prepare_llm(self, model_name: str, port: int) -> None:
         if "localhost" == model_name:
@@ -156,7 +77,7 @@ class LLMEngine:
             model = next(iter(models)).id
             self._model_name_str = model.split("/")[-1]
 
-            llm = next((llm for llm in LLMS if llm["model_name"] == model), None)
+            llm = next((llm for llm in self.model_list if llm["model_name"] == model), None)
             self._model_name = model
             self._api_provider = "localhost"
             if llm is None:
@@ -168,7 +89,7 @@ class LLMEngine:
                 self._is_reasoning = llm["is_reasoning"]
         else:
             # get match in LLMS
-            llm = next((llm for llm in LLMS if llm["model_name"] == model_name), None)
+            llm = next((llm for llm in self.model_list if llm["model_name"] == model_name), None)
             if llm is None:
                 raise ValueError(f"Invalid model name: {model_name}")
             model = llm["model_name"]
@@ -208,7 +129,8 @@ class LLMEngine:
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(model)
         except Exception as e:
-            logger.error(f"Error: {e}\nCould not load tokenizer for model: {model}")
+            logger.error(f"Could not load tokenizer for model: {model}")
+            # Default to Llama-3.1 tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
                 "meta-llama/Llama-3.1-70B-Instruct"
             )
@@ -510,7 +432,8 @@ class LLMEngine:
         if name in config_attrs:
             return getattr(self._config, name)
         raise AttributeError(f"No attribute '{name}'")
-
+    
+    
     @property
     def model_name(self) -> str:
         return self._model_name_str

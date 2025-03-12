@@ -1,0 +1,203 @@
+models:
+  #######
+  # Google Models
+  #######
+  - model_name: gemini-1.5-flash
+    api_provider: google
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: gemini-2.0-flash
+    api_provider: google
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: gemini-2.0-pro-exp-02-05
+    api_provider: google
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: gemini-2.0-flash-thinking-exp-01-21
+    api_provider: google
+    is_instruct: true
+    is_reasoning: true
+
+  #######
+  # OpenAI Models
+  #######
+  - model_name: gpt-4o
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: gpt-4o-mini
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: o1-mini
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: o1-pro
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: o3-mini
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: deepseek-chat
+    api_provider: deepseek
+    is_instruct: true
+    is_reasoning: false
+
+  #######
+  # DeepSeek Models
+  #######
+  - model_name: deepseek-reasoner
+    api_provider: deepseek
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: deepseek-chat # v3-chat
+    api_provider: deepseek
+    is_instruct: true
+    is_reasoning: true
+
+  #######
+  # Mistral Models
+  #######
+  - model_name: mistralai/Mistral-Small-24B-Base-2501
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: mistralai/Mistral-Small-24B-Instruct-2501
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: mistralai/Mistral-7B-v0.1
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: mistralai/Mistral-7B-Instruct-v0.2
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  #######
+  # Llama Models
+  #######
+  - model_name: meta-llama/Llama-2-7b-hf
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-2-7b-chat-hf
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-2-13b-hf
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+  
+  - model_name: meta-llama/Llama-2-13b-chat-hf
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+  
+  - model_name: meta-llama/Llama-2-70b-hf
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-2-70b-chat-hf
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: meta-llama/Meta-Llama-3-8B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Meta-Llama-3-8B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: meta-llama/Meta-Llama-3-70B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Meta-Llama-3-70B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: meta-llama/Meta-Llama-3.1-8B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Meta-Llama-3.1-8B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-3.1-70B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-3.1-70B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-3.3-70B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  #######
+  # Distilled Deepseek models
+  #######
+  - model_name: deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: deepseek-ai/DeepSeek-R1-Distill-Qwen-32B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: dummy
+    api_provider: dummy
+    is_instruct: false
+    is_reasoning: false
