@@ -28,39 +28,39 @@ class LLMConfig:
         parser.add_argument(
             "--max-tokens",
             type=int,
-            help="The number of maximum tokens to generate",
+            help=f"The number of maximum tokens to generate (default: {LLMConfig.max_tokens})",
             default=LLMConfig.max_tokens,
         )
         parser.add_argument(
             "--temperature",
             type=float,
-            help="Decoding temperature",
+            help=f"Decoding temperature (default: {LLMConfig.temperature})",
             default=LLMConfig.temperature,
         )
         parser.add_argument(
             "--model-name",
             "-m",
             type=str,
-            help="model name or localhost if local serving",
+            help=f"model name or localhost if local serving (default: {LLMConfig.model_name})",
             default=LLMConfig.model_name,
         )
         parser.add_argument(
             "--top-p",
             type=float,
-            help="Nucleus sampling parameter",
+            help=f"Nucleus sampling parameter (default: {LLMConfig.top_p})",
             default=LLMConfig.top_p,
         )
         parser.add_argument(
             "--port",
             type=int,
-            help="localhost port number",
+            help=f"localhost port number (default: {LLMConfig.port})",
             default=LLMConfig.port,
         )
         parser.add_argument("--echo", type=bool, default=LLMConfig.echo)
         parser.add_argument(
             "--logprobs",
             type=int,
-            help="The number of logprobs to present",
+            help=f"The number of logprobs to present (default: {LLMConfig.logprobs})",
             default=LLMConfig.logprobs,
         )
         return parser
