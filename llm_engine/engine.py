@@ -132,7 +132,7 @@ class LLMEngine:
             logger.error(f"Could not load tokenizer for model: {model}")
             # Default to Llama-3.1 tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
-                "meta-llama/Llama-3.1-70B-Instruct"
+                "meta-llama/Llama-3.1-8B-Instruct"
             )
 
     def reinitialize(self) -> None:
@@ -193,7 +193,7 @@ class LLMEngine:
     def prompt_llm_auto(
         self,
         model_prompt,
-        system_prompt: str = None,
+        system_prompt: str = "",
         n=1,
     ):
         try:
@@ -324,7 +324,7 @@ class LLMEngine:
     def prompt_llm_reasoning_auto(
         self,
         model_prompt: str,
-        system_prompt: str = None,
+        system_prompt: str = "",
         n=1,
     ):
         assert n >= 1

@@ -49,9 +49,20 @@ models:
     api_provider: openai
     is_instruct: true
     is_reasoning: true
+    
+  - model_name: o4-mini
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
 
-  - model_name: deepseek-chat
-    api_provider: deepseek
+#gpt-4.1-2025-04-14
+  - model_name: gpt-4.1 
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: gpt-4.1-mini 
+    api_provider: localhost
     is_instruct: true
     is_reasoning: false
 
@@ -66,7 +77,7 @@ models:
   - model_name: deepseek-chat # v3-chat
     api_provider: deepseek
     is_instruct: true
-    is_reasoning: true
+    is_reasoning: false
 
   #######
   # Mistral Models
@@ -197,6 +208,39 @@ models:
     is_instruct: true
     is_reasoning: true
 
+### Qwen
+  - model_name: Qwen/QwQ-32B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
+  - model_name: Qwen/Qwen2.5-32B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-32B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+
+  - model_name: Qwen/Qwen2.5-VL-32B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: Qwen/Qwen2.5-VL-72B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: Qwen/Qwen2.5-Omni-7B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+### Dummy
   - model_name: dummy
     api_provider: dummy
     is_instruct: false
