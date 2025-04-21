@@ -198,10 +198,15 @@ class LLMEngine:
     ):
         try:
             if self._is_reasoning:
-                assert isinstance(model_prompt, str)
-                return self.prompt_llm_reasoning_auto(
-                    model_prompt=model_prompt, system_prompt=system_prompt, n=n
-                )
+                assert isinstance(model_prompt, str | list)
+                if isinstance(model_prompt, str):
+                    return self.prompt_llm_reasoning(
+                        model_prompt=model_prompt, system_prompt=system_prompt, n=n
+                    )
+                if isinstance(model_prompt, list):
+                    return self.prompt_llm_reasoning_with_messages(
+                        messages=model_prompt, n=n
+                    )
             if not self._is_instruct:
                 assert isinstance(model_prompt, str)
                 return self.prompt_llm(prompt=model_prompt, n=n)
@@ -214,6 +219,7 @@ class LLMEngine:
                     return self.prompt_llm_chat_with_messages(
                         messages=model_prompt, n=n
                     )
+                
                 else:
                     messages = [
                         {"role": "user", "content": model_prompt},
@@ -321,7 +327,7 @@ class LLMEngine:
         max_retries=20,
         no_retry_on=(AuthenticationError, BadRequestError),
     )
-    def prompt_llm_reasoning_auto(
+    def prompt_llm_reasoning(
         self,
         model_prompt: str,
         system_prompt: str = "",
@@ -336,6 +342,23 @@ class LLMEngine:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": model_prompt},
             ],
+            n=n,
+        )
+    @retry_with_exponential_backoff(
+        max_retries=20,
+        no_retry_on=(AuthenticationError, BadRequestError),
+    )
+    def prompt_llm_reasoning_with_messages(
+        self,
+        messages: list[dict],
+        n=1,
+    ):
+        assert n >= 1
+        model_name = self._model_name
+
+        return self.client.chat.completions.create(
+            model=model_name,
+            messages=messages,
             n=n,
         )
 
