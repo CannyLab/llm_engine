@@ -343,6 +343,9 @@ class LLMEngine:
                 {"role": "user", "content": model_prompt},
             ],
             n=n,
+            temperature=self._config.temperature,
+            top_p=self._config.top_p,
+            
         )
     @retry_with_exponential_backoff(
         max_retries=20,
@@ -360,6 +363,9 @@ class LLMEngine:
             model=model_name,
             messages=messages,
             n=n,
+            temperature=self._config.temperature,
+            top_p=self._config.top_p,
+
         )
 
     @retry_with_exponential_backoff(
@@ -439,6 +445,9 @@ class LLMEngine:
             f"temperature={self._config.temperature}, "
             f"top_p={self._config.top_p}, "
             f"min_p={self._config.min_p}"
+            f"stop={self._config.stop}, "
+            f"logprobs={self._config.logprobs}, "
+            f"echo={self._config.echo}, "
             f")"
         )
 
