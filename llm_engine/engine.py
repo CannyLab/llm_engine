@@ -10,13 +10,39 @@ from typing import Any, Callable, Collection, Optional, Type, TypeVar
 from openai import AuthenticationError, BadRequestError, OpenAI
 from tqdm import tqdm
 from transformers import AutoTokenizer
+from vllm import LLM
 
 from .config import LLMConfig
 
 Q = TypeVar("Q", bound=Callable[..., Any])
 
 logger = logging.getLogger(__name__)
+class FakeCompletions:
+    def __init__(self, results): 
+        # make it so that this works 
+        # Completions = FakeCompletions(results)
+        # c = [choice.message.content for choice in Completions.choices]
+        
+        self.results = results[0]
 
+    @property
+    def choices(self):
+        return [
+            type(
+            "Choice",
+            (),
+            {
+                "message": type(
+                "Message",
+                (),
+                {"content": res.text}
+                )(),
+                "logprobs": res.logprobs,
+            },
+            )()
+            for res in self.results.outputs
+        ]
+        
 
 class DummyClient:
     @property
@@ -46,15 +72,18 @@ class LLMEngine:
     def __init__(self, llm_config: LLMConfig) -> None:
         self._config = llm_config
         self._load_models()
+        self.hosted_vllm = False
         self.prepare_llm(
             model_name=llm_config.model_name,
             port=llm_config.port,
+            tokenizer=llm_config.tokenizer,
         )
         
         logger.info(f"Initialized LLM Engine with model: {self._model_name_str}")
         logger.info(f"API Provider: {self._api_provider}")
         logger.info(f"is_instruct: {self._is_instruct}")
         logger.info(f"is_reasoning: {self._is_reasoning}")
+
 
     def _load_models(self) -> None:
         models_path = Path(__file__).parent.parent / "models" / "models.yaml"
@@ -66,7 +95,7 @@ class LLMEngine:
             logger.error(f"Error loading models.yaml: {e}")
             self.model_list = []
 
-    def prepare_llm(self, model_name: str, port: int) -> None:
+    def prepare_llm(self, model_name: str, port: int, tokenizer: str = None) -> None:
         if "localhost" == model_name:
             self.client = OpenAI(
                 api_key="EMPTY",
@@ -91,13 +120,20 @@ class LLMEngine:
             # get match in LLMS
             llm = next((llm for llm in self.model_list if llm["model_name"] == model_name), None)
             if llm is None:
-                raise ValueError(f"Invalid model name: {model_name}")
-            model = llm["model_name"]
-            self._model_name = model
-            self._model_name_str = model.split("/")[-1]
-            self._api_provider = llm["api_provider"]
-            self._is_instruct = llm["is_instruct"]
-            self._is_reasoning = llm["is_reasoning"]
+                model = model_name
+                self._model_name = model
+                self._model_name_str = model.split("/")[-1]
+                self._api_provider = None
+                self._is_instruct = True
+                self._is_reasoning = False
+                logger.warning(f"Unrecognized model: {model} - default is_instruct = True, is_reasoning = False")
+            else:
+                model = llm["model_name"]
+                self._model_name = model
+                self._model_name_str = model.split("/")[-1]
+                self._api_provider = llm["api_provider"]
+                self._is_instruct = llm["is_instruct"]
+                self._is_reasoning = llm["is_reasoning"]
             if self._api_provider == "openai":  # openai
                 self.client = OpenAI(
                     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -124,10 +160,21 @@ class LLMEngine:
                 self.client = DummyClient()
 
             else:
-                raise ValueError(f"Invalid API provider: {self._api_provider}")
+                if tokenizer is None:
+                    # we need to self serve
+                    self.client = LLM(model=model)
+                else: 
+                    self.client = LLM(model=model, tokenizer=tokenizer)
+                
+                self.hosted_vllm = True
+                
+                # raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(model)
+            if tokenizer is not None:
+                self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+            else: 
+                self.tokenizer = AutoTokenizer.from_pretrained(model)
         except Exception as e:
             logger.error(f"Could not load tokenizer for model: {model}")
             # Default to Llama-3.1 tokenizer
@@ -139,6 +186,7 @@ class LLMEngine:
         self.prepare_llm(
             model_name=self._model_name,
             port=self._config.port,
+            tokenizer=self._config.tokenizer,   
         )
 
     def update_config(self, **kwargs) -> None:
@@ -189,6 +237,37 @@ class LLMEngine:
             return wrapper
 
         return decorator
+
+        
+    def llm_chat(self, messages, **kwargs):
+        if self.hosted_vllm: 
+            from vllm import SamplingParams
+            if "extra_headers" in kwargs.keys(): 
+                extra_headers = kwargs["extra_headers"]
+                # cast min_p to an integer
+                if "min_p" in extra_headers.keys():
+                    extra_headers["min_p"] = float(extra_headers["min_p"])
+
+                kwargs ={**kwargs, **extra_headers}
+                del kwargs["extra_headers"]
+                del kwargs["model"]
+            sp = SamplingParams(
+                **kwargs
+            )
+
+            output = self.client.chat(
+                messages = messages,
+                sampling_params=sp,
+            )
+            # will need to post process output
+            output = FakeCompletions(output)
+            
+            return output
+        else:
+            return self.client.chat.completions.create(
+                messages = messages
+                **kwargs
+            )
 
     def prompt_llm_auto(
         self,
@@ -247,6 +326,8 @@ class LLMEngine:
         top_p = self._config.top_p
         min_p = self._config.min_p
         echo = self._config.echo
+        if self.hosted_vllm:
+            raise NotImplementedError
 
         if logprobs > 0:
             return self.client.completions.create(
@@ -295,7 +376,7 @@ class LLMEngine:
         min_p = self._config.min_p
 
         if logprobs > 0:
-            return self.client.chat.completions.create(
+            return self.llm_chat(
                 model=model_name,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -310,10 +391,10 @@ class LLMEngine:
                 extra_headers={"min_p": f"{min_p}"},
             )
         else:
-            return self.client.chat.completions.create(
+            return self.llm_chat(
                 model=model_name,
                 messages=[
-                    {"role": "system", "content": system_prompt},
+                   {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 max_tokens=max_tokens,
@@ -336,7 +417,7 @@ class LLMEngine:
         assert n >= 1
         model_name = self._model_name
 
-        return self.client.chat.completions.create(
+        return self.llm_chat(
             model=model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -359,7 +440,7 @@ class LLMEngine:
         assert n >= 1
         model_name = self._model_name
 
-        return self.client.chat.completions.create(
+        return self.llm_chat(
             model=model_name,
             messages=messages,
             n=n,
@@ -386,7 +467,7 @@ class LLMEngine:
         logprobs = self._config.logprobs
         min_p = self._config.min_p
         if logprobs > 0:
-            return self.client.chat.completions.create(
+            return self.llm_chat(
                 model=model_name,
                 messages=messages,
                 max_tokens=max_tokens,
@@ -398,7 +479,7 @@ class LLMEngine:
                 extra_headers={"min_p": f"{min_p}"},
             )
         else:
-            return self.client.chat.completions.create(
+            return self.llm_chat(
                 model=model_name,
                 messages=messages,
                 max_tokens=max_tokens,
