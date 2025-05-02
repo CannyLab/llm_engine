@@ -23,6 +23,7 @@ class LLMConfig:
     echo: bool = False
     port: int = 8000
     logprobs: int = 0
+    tokenizer: Optional[str] = None
 
     def add_cli_args(parser: FlexibleArgumentParser) -> FlexibleArgumentParser:
         parser.add_argument(
@@ -62,5 +63,11 @@ class LLMConfig:
             type=int,
             help=f"The number of logprobs to present (default: {LLMConfig.logprobs})",
             default=LLMConfig.logprobs,
+        )
+        parser.add_argument(
+            "--tokenizer",
+            type=str,
+            help=f"Tokenizer to use for the model (default: {LLMConfig.tokenizer})",
+            default=LLMConfig.tokenizer,    
         )
         return parser
