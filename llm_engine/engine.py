@@ -265,7 +265,7 @@ class LLMEngine:
             return output
         else:
             return self.client.chat.completions.create(
-                messages = messages
+                messages = messages,
                 **kwargs
             )
 
@@ -525,7 +525,7 @@ class LLMEngine:
             f"max_tokens={self._config.max_tokens}, "
             f"temperature={self._config.temperature}, "
             f"top_p={self._config.top_p}, "
-            f"min_p={self._config.min_p}"
+            f"min_p={self._config.min_p}, "
             f"stop={self._config.stop}, "
             f"logprobs={self._config.logprobs}, "
             f"echo={self._config.echo}, "
