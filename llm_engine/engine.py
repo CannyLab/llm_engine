@@ -558,10 +558,20 @@ class LLMEngine:
     @property
     def is_instruct(self) -> bool:
         return self._is_instruct
+    
+    @is_instruct.setter
+    def is_instruct(self, value: bool) -> None:
+        self._is_instruct = value
+        self._config.is_instruct = value
 
     @property
     def is_reasoning(self) -> bool:
         return self._is_reasoning
+    
+    @is_reasoning.setter
+    def is_reasoning(self, value: bool) -> None:
+        self._is_reasoning = value
+        self._config.is_reasoning = value
 
     @property
     def config(self) -> LLMConfig:
