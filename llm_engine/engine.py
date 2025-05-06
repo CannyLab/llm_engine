@@ -243,7 +243,7 @@ class LLMEngine:
         max_tokens = self._config.max_tokens
         temperature = self._config.temperature
         stop = self._config.stop
-        logprobs = self._config.logprobs
+        logprobs = self._config.logprobs > 0
         top_p = self._config.top_p
         min_p = self._config.min_p
         echo = self._config.echo
@@ -291,7 +291,8 @@ class LLMEngine:
         temperature = self._config.temperature
         stop = self._config.stop
         top_p = self._config.top_p
-        logprobs = self._config.logprobs
+        top_logprobs = self._config.logprobs
+        logprobs = self._config.logprobs > 0
         min_p = self._config.min_p
 
         if logprobs > 0:
@@ -306,7 +307,7 @@ class LLMEngine:
                 top_p=top_p,
                 n=n,
                 logprobs=logprobs,
-                top_logprobs=logprobs,
+                top_logprobs=top_logprobs,
                 extra_headers={"min_p": f"{min_p}"},
             )
         else:
@@ -358,15 +359,28 @@ class LLMEngine:
     ):
         assert n >= 1
         model_name = self._model_name
+        logprobs = self._config.logprobs > 0
+        top_logprobs = self._config.logprobs
 
-        return self.client.chat.completions.create(
-            model=model_name,
-            messages=messages,
-            n=n,
-            temperature=self._config.temperature,
-            top_p=self._config.top_p,
-
-        )
+        if logprobs:
+            return self.client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                n=n,
+                temperature=self._config.temperature,
+                top_p=self._config.top_p,
+                logprobs=logprobs,
+                top_logprobs=top_logprobs,
+            )
+        else:
+            return self.client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                n=n,
+                temperature=self._config.temperature,
+                top_p=self._config.top_p,
+            )
+            
 
     @retry_with_exponential_backoff(
         max_retries=20,
@@ -383,7 +397,8 @@ class LLMEngine:
         temperature = self._config.temperature
         stop = self._config.stop
         top_p = self._config.top_p
-        logprobs = self._config.logprobs
+        logprobs = self._config.logprobs > 0
+        top_logprobs = self._config.logprobs
         min_p = self._config.min_p
         if logprobs > 0:
             return self.client.chat.completions.create(
@@ -394,7 +409,7 @@ class LLMEngine:
                 top_p=top_p,
                 n=n,
                 logprobs=logprobs,
-                top_logprobs=logprobs,
+                top_logprobs=top_logprobs,
                 extra_headers={"min_p": f"{min_p}"},
             )
         else:
