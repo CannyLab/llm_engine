@@ -177,6 +177,7 @@ class LLMEngine:
                 self.tokenizer = AutoTokenizer.from_pretrained(model)
         except Exception as e:
             logger.error(f"Could not load tokenizer for model: {model}")
+            logger.error(f"Using default tokenizer: meta-llama/Llama-3.1-8B-Instruct")
             # Default to Llama-3.1 tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
                 "meta-llama/Llama-3.1-8B-Instruct"
@@ -499,10 +500,11 @@ class LLMEngine:
         if output is None:
             return None
         texts = []
+        
         for choice in getattr(output, "choices", []):
-            if hasattr(choice, "message"):
+            if hasattr(choice, "message"): # chat completions
                 texts.append(getattr(choice.message, "content", ""))
-            else:
+            else: # completions
                 texts.append(getattr(choice, "text", ""))
         if len(texts) == 1:
             return texts[0]
