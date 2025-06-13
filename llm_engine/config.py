@@ -25,6 +25,7 @@ class LLMConfig:
     logprobs: int = 0
     tokenizer: Optional[str] = None
 
+    @staticmethod
     def add_cli_args(parser: FlexibleArgumentParser) -> FlexibleArgumentParser:
         parser.add_argument(
             "--max-tokens",
