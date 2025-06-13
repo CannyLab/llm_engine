@@ -274,39 +274,45 @@ class LLMEngine:
         model_prompt,
         system_prompt: str = "",
         n=1,
+        return_raw: bool = False,
     ):
+        output = None
         try:
             if self._is_reasoning:
                 assert isinstance(model_prompt, str | list)
                 if isinstance(model_prompt, str):
-                    return self.prompt_llm_reasoning(
+                    output = self.prompt_llm_reasoning(
                         model_prompt=model_prompt, system_prompt=system_prompt, n=n
                     )
-                if isinstance(model_prompt, list):
-                    return self.prompt_llm_reasoning_with_messages(
+                elif isinstance(model_prompt, list):
+                    output = self.prompt_llm_reasoning_with_messages(
                         messages=model_prompt, n=n
                     )
-            if not self._is_instruct:
+            elif not self._is_instruct:
                 assert isinstance(model_prompt, str)
-                return self.prompt_llm(prompt=model_prompt, n=n)
+                output = self.prompt_llm(prompt=model_prompt, n=n)
             else:
                 if isinstance(model_prompt, str) and system_prompt is not None:
-                    return self.prompt_llm_chat(
+                    output = self.prompt_llm_chat(
                         system_prompt=system_prompt, user_prompt=model_prompt, n=n
                     )
                 elif isinstance(model_prompt, list):
-                    return self.prompt_llm_chat_with_messages(
+                    output = self.prompt_llm_chat_with_messages(
                         messages=model_prompt, n=n
                     )
-                
                 else:
                     messages = [
                         {"role": "user", "content": model_prompt},
                     ]
-                    return self.prompt_llm_chat_with_messages(messages=messages, n=n)
+                    output = self.prompt_llm_chat_with_messages(messages=messages, n=n)
         except BadRequestError as e:
             logger.error(f"Error: {e}")
             return None
+
+        if return_raw:
+            return output
+
+        return self._extract_text(output)
 
     @retry_with_exponential_backoff(
         max_retries=20,
@@ -488,6 +494,19 @@ class LLMEngine:
                 n=n,
                 extra_headers={"min_p": f"{min_p}"},
             )
+
+    def _extract_text(self, output):
+        if output is None:
+            return None
+        texts = []
+        for choice in getattr(output, "choices", []):
+            if hasattr(choice, "message"):
+                texts.append(getattr(choice.message, "content", ""))
+            else:
+                texts.append(getattr(choice, "text", ""))
+        if len(texts) == 1:
+            return texts[0]
+        return texts
 
     def parallel_generator(
         self,
