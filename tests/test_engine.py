@@ -6,24 +6,28 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # Provide stub modules used by engine
-sys.modules['openai'] = types.SimpleNamespace(
+sys.modules["openai"] = types.SimpleNamespace(
     AuthenticationError=Exception,
     BadRequestError=Exception,
     OpenAI=object,
 )
-sys.modules['vllm'] = types.SimpleNamespace(LLM=lambda *args, **kwargs: object())
-sys.modules['transformers'] = types.SimpleNamespace(
-    AutoTokenizer=types.SimpleNamespace(from_pretrained=lambda *args, **kwargs: object())
+sys.modules["vllm"] = types.SimpleNamespace(LLM=lambda *args, **kwargs: object())
+sys.modules["transformers"] = types.SimpleNamespace(
+    AutoTokenizer=types.SimpleNamespace(
+        from_pretrained=lambda *args, **kwargs: object()
+    )
 )
-sys.modules['tqdm'] = types.SimpleNamespace(tqdm=lambda iterable=None, **kwargs: iterable)
-sys.modules['yaml'] = types.SimpleNamespace(
+sys.modules["tqdm"] = types.SimpleNamespace(
+    tqdm=lambda iterable=None, **kwargs: iterable
+)
+sys.modules["yaml"] = types.SimpleNamespace(
     safe_load=lambda f: {
-        'models': [
+        "models": [
             {
-                'model_name': 'dummy',
-                'api_provider': 'dummy',
-                'is_instruct': True,
-                'is_reasoning': False,
+                "model_name": "dummy",
+                "api_provider": "dummy",
+                "is_instruct": True,
+                "is_reasoning": False,
             }
         ]
     }

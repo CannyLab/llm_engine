@@ -24,6 +24,8 @@ class LLMConfig:
     port: int = 8000
     logprobs: int = 0
     tokenizer: Optional[str] = None
+    is_instruct: bool = False
+    is_reasoning: bool = False
 
     @staticmethod
     def add_cli_args(parser: FlexibleArgumentParser) -> FlexibleArgumentParser:
@@ -69,6 +71,18 @@ class LLMConfig:
             "--tokenizer",
             type=str,
             help=f"Tokenizer to use for the model (default: {LLMConfig.tokenizer})",
-            default=LLMConfig.tokenizer,    
+            default=LLMConfig.tokenizer,
+        )
+        parser.add_argument(
+            "--is-instruct",
+            type=bool,
+            help=f"Whether the model is a chat model (instruction following model). This is used for custom LLM models that are not listed in models.yaml (default: {LLMConfig.is_instruct})",
+            default=LLMConfig.is_instruct,
+        )
+        parser.add_argument(
+            "--is-reasoning",
+            type=bool,
+            help=f"Whether the model is a reasoning model. This is used for custom LLM models that are not listed in models.yaml (default: {LLMConfig.is_reasoning})",
+            default=LLMConfig.is_reasoning,
         )
         return parser
