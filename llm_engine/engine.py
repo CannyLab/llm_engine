@@ -17,32 +17,30 @@ from .config import LLMConfig
 Q = TypeVar("Q", bound=Callable[..., Any])
 
 logger = logging.getLogger(__name__)
+
+
 class FakeCompletions:
-    def __init__(self, results): 
-        # make it so that this works 
+    def __init__(self, results):
+        # make it so that this works
         # Completions = FakeCompletions(results)
         # c = [choice.message.content for choice in Completions.choices]
-        
+
         self.results = results[0]
 
     @property
     def choices(self):
         return [
             type(
-            "Choice",
-            (),
-            {
-                "message": type(
-                "Message",
+                "Choice",
                 (),
-                {"content": res.text}
-                )(),
-                "logprobs": res.logprobs,
-            },
+                {
+                    "message": type("Message", (), {"content": res.text})(),
+                    "logprobs": res.logprobs,
+                },
             )()
             for res in self.results.outputs
         ]
-        
+
 
 class DummyClient:
     @property
@@ -78,17 +76,16 @@ class LLMEngine:
             port=llm_config.port,
             tokenizer=llm_config.tokenizer,
         )
-        
+
         logger.info(f"Initialized LLM Engine with model: {self._model_name_str}")
         logger.info(f"API Provider: {self._api_provider}")
         logger.info(f"is_instruct: {self._is_instruct}")
         logger.info(f"is_reasoning: {self._is_reasoning}")
 
-
     def _load_models(self) -> None:
         models_path = Path(__file__).parent.parent / "models" / "models.yaml"
         try:
-            with open(models_path, 'r') as f:
+            with open(models_path, "r") as f:
                 models = yaml.safe_load(f)
                 self.model_list = models["models"]
         except Exception as e:
@@ -96,7 +93,7 @@ class LLMEngine:
             self.model_list = []
 
     def prepare_llm(self, model_name: str, port: int, tokenizer: str = None) -> None:
-        if "localhost" == model_name:
+        if "localhost" == model_name:  # local serving
             self.client = OpenAI(
                 api_key="EMPTY",
                 base_url=f"http://localhost:{port}/v1",  # base_url=f"http://127.0.0.1:{port}/v1",
@@ -106,27 +103,34 @@ class LLMEngine:
             model = next(iter(models)).id
             self._model_name_str = model.split("/")[-1]
 
-            llm = next((llm for llm in self.model_list if llm["model_name"] == model), None)
+            llm = next(
+                (llm for llm in self.model_list if llm["model_name"] == model), None
+            )
             self._model_name = model
             self._api_provider = "localhost"
             if llm is None:
                 logger.error(f"Unrecognized local model: {model}")
-                self._is_instruct = False
-                self._is_reasoning = False
+                self._is_instruct = self._config.is_instruct
+                self._is_reasoning = self._config.is_reasoning
             else:
                 self._is_instruct = llm["is_instruct"]
                 self._is_reasoning = llm["is_reasoning"]
         else:
             # get match in LLMS
-            llm = next((llm for llm in self.model_list if llm["model_name"] == model_name), None)
-            if llm is None:
+            llm = next(
+                (llm for llm in self.model_list if llm["model_name"] == model_name),
+                None,
+            )
+            if llm is None: # model not found in models.yaml
                 model = model_name
                 self._model_name = model
                 self._model_name_str = model.split("/")[-1]
                 self._api_provider = None
-                self._is_instruct = True
-                self._is_reasoning = False
-                logger.warning(f"Unrecognized model: {model} - default is_instruct = True, is_reasoning = False")
+                self._is_instruct = self._config.is_instruct
+                self._is_reasoning = self._config.is_reasoning
+                logger.warning(
+                    f"Unrecognized model: {model} - default is_instruct = {self._config.is_instruct}, is_reasoning = {self._config.is_reasoning}"
+                )
             else:
                 model = llm["model_name"]
                 self._model_name = model
@@ -163,17 +167,17 @@ class LLMEngine:
                 if tokenizer is None:
                     # we need to self serve
                     self.client = LLM(model=model)
-                else: 
+                else:
                     self.client = LLM(model=model, tokenizer=tokenizer)
-                
+
                 self.hosted_vllm = True
-                
+
                 # raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
             if tokenizer is not None:
                 self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-            else: 
+            else:
                 self.tokenizer = AutoTokenizer.from_pretrained(model)
         except Exception as e:
             logger.error(f"Could not load tokenizer for model: {model}")
@@ -187,7 +191,7 @@ class LLMEngine:
         self.prepare_llm(
             model_name=self._model_name,
             port=self._config.port,
-            tokenizer=self._config.tokenizer,   
+            tokenizer=self._config.tokenizer,
         )
 
     def update_config(self, **kwargs) -> None:
@@ -239,36 +243,31 @@ class LLMEngine:
 
         return decorator
 
-        
     def llm_chat(self, messages, **kwargs):
-        if self.hosted_vllm: 
+        if self.hosted_vllm:
             from vllm import SamplingParams
-            if "extra_headers" in kwargs.keys(): 
+
+            if "extra_headers" in kwargs.keys():
                 extra_headers = kwargs["extra_headers"]
                 # cast min_p to an integer
                 if "min_p" in extra_headers.keys():
                     extra_headers["min_p"] = float(extra_headers["min_p"])
 
-                kwargs ={**kwargs, **extra_headers}
+                kwargs = {**kwargs, **extra_headers}
                 del kwargs["extra_headers"]
                 del kwargs["model"]
-            sp = SamplingParams(
-                **kwargs
-            )
+            sp = SamplingParams(**kwargs)
 
             output = self.client.chat(
-                messages = messages,
+                messages=messages,
                 sampling_params=sp,
             )
             # will need to post process output
             output = FakeCompletions(output)
-            
+
             return output
         else:
-            return self.client.chat.completions.create(
-                messages = messages,
-                **kwargs
-            )
+            return self.client.chat.completions.create(messages=messages, **kwargs)
 
     def prompt_llm_auto(
         self,
@@ -401,7 +400,7 @@ class LLMEngine:
             return self.llm_chat(
                 model=model_name,
                 messages=[
-                   {"role": "system", "content": system_prompt},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 max_tokens=max_tokens,
@@ -433,8 +432,8 @@ class LLMEngine:
             n=n,
             temperature=self._config.temperature,
             top_p=self._config.top_p,
-            
         )
+
     @retry_with_exponential_backoff(
         max_retries=20,
         no_retry_on=(AuthenticationError, BadRequestError),
@@ -453,7 +452,6 @@ class LLMEngine:
             n=n,
             temperature=self._config.temperature,
             top_p=self._config.top_p,
-
         )
 
     @retry_with_exponential_backoff(
@@ -500,11 +498,11 @@ class LLMEngine:
         if output is None:
             return None
         texts = []
-        
+
         for choice in getattr(output, "choices", []):
-            if hasattr(choice, "message"): # chat completions
+            if hasattr(choice, "message"):  # chat completions
                 texts.append(getattr(choice.message, "content", ""))
-            else: # completions
+            else:  # completions
                 texts.append(getattr(choice, "text", ""))
         if len(texts) == 1:
             return texts[0]
@@ -566,8 +564,7 @@ class LLMEngine:
         if name in config_attrs:
             return getattr(self._config, name)
         raise AttributeError(f"No attribute '{name}'")
-    
-    
+
     @property
     def model_name(self) -> str:
         return self._model_name_str
@@ -579,7 +576,7 @@ class LLMEngine:
     @property
     def is_instruct(self) -> bool:
         return self._is_instruct
-    
+
     @is_instruct.setter
     def is_instruct(self, value: bool) -> None:
         self._is_instruct = value
@@ -588,7 +585,7 @@ class LLMEngine:
     @property
     def is_reasoning(self) -> bool:
         return self._is_reasoning
-    
+
     @is_reasoning.setter
     def is_reasoning(self, value: bool) -> None:
         self._is_reasoning = value
