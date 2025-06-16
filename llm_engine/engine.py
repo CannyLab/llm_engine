@@ -189,7 +189,7 @@ class LLMEngine:
                 import torch
                 from vllm import LLM
 
-                num_gpus = torch.cuda.device_count()
+                num_gpus = self._config.num_gpus if self._config.num_gpus >=0 else torch.cuda.device_count()
                 if num_gpus == 0:
                     logger.warning("No GPUs found, using CPU for vLLM.")
                     self.client = LLM(model=model, tokenizer=tokenizer)
@@ -295,9 +295,10 @@ class LLMEngine:
                 del kwargs["model"]
             sp = SamplingParams(**kwargs)
 
-            output = self.client.completions.create(
-                prompt=prompt,
+            output = self.client.generate(
+                [prompt],
                 sampling_params=sp,
+                use_tqdm=False
             )
             # will need to post process output
             output = FakeCompletions(output)
