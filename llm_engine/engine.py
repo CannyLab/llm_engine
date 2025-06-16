@@ -115,7 +115,13 @@ class LLMEngine:
             logger.error(f"Error loading models.yaml: {e}")
             self.model_list = []
 
-    def prepare_llm(self, model_name: str, port: int, tokenizer: str = None, need_tokenizer: bool = False) -> None:
+    def prepare_llm(
+        self,
+        model_name: str,
+        port: int,
+        tokenizer: str = None,
+        need_tokenizer: bool = False,
+    ) -> None:
         if "localhost" == model_name:  # local serving
             self.client = OpenAI(
                 api_key="EMPTY",
@@ -190,7 +196,11 @@ class LLMEngine:
                 import torch
                 from vllm import LLM
 
-                num_gpus = self._config.num_gpus if self._config.num_gpus >=0 else torch.cuda.device_count()
+                num_gpus = (
+                    self._config.num_gpus
+                    if self._config.num_gpus >= 0
+                    else torch.cuda.device_count()
+                )
                 if num_gpus == 0:
                     logger.warning("No GPUs found, using CPU for vLLM.")
                     self.client = LLM(model=model, tokenizer=tokenizer)
@@ -213,11 +223,7 @@ class LLMEngine:
                 # raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
-<<<<<<< suhong/need_tokenizer_flag
-            if tokenizer is not None and need_tokenizer:
-=======
-            if tokenizer is not None and isinstance(tokenizer, str):
->>>>>>> main
+            if tokenizer is not None and isinstance(tokenizer, str) and need_tokenizer:
                 self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
             elif need_tokenizer:
                 self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -302,11 +308,7 @@ class LLMEngine:
                 del kwargs["model"]
             sp = SamplingParams(**kwargs)
 
-            output = self.client.generate(
-                [prompt],
-                sampling_params=sp,
-                use_tqdm=False
-            )
+            output = self.client.generate([prompt], sampling_params=sp, use_tqdm=False)
             # will need to post process output
             output = FakeCompletions(output)
 
