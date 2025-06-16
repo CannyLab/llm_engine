@@ -27,6 +27,7 @@ class LLMConfig:
     tokenizer: Optional[str] = None
     is_instruct: bool = False
     is_reasoning: bool = False
+    num_gpus: int = -1
 
     @staticmethod
     def add_cli_args(parser: FlexibleArgumentParser) -> FlexibleArgumentParser:
@@ -91,5 +92,11 @@ class LLMConfig:
             type=bool,
             help=f"Whether the model is a reasoning model. This is used for custom LLM models that are not listed in models.yaml (default: {LLMConfig.is_reasoning})",
             default=LLMConfig.is_reasoning,
+        )
+        parser.add_argument(
+            "--num-gpus",
+            type=int,
+            help=f"Number of GPUs to use (default: {LLMConfig.num_gpus})",
+            default=LLMConfig.num_gpus,
         )
         return parser

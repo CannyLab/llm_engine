@@ -10,7 +10,6 @@ from typing import Any, Callable, Collection, Optional, Type, TypeVar
 from openai import AuthenticationError, BadRequestError, OpenAI
 from tqdm import tqdm
 from transformers import AutoTokenizer
-from vllm import LLM
 
 from .config import LLMConfig
 
@@ -22,7 +21,30 @@ logger = logging.getLogger(__name__)
 class FakeCompletions:
     def __init__(self, results):
         # make it so that this works
-        # Completions = FakeCompletions(results)
+        # Completions = FakeChatCompletions(results)
+        # c = [choice.message.content for choice in Completions.choices]
+
+        self.results = results[0]
+
+    @property
+    def choices(self):
+        return [
+            type(
+                "Choice",
+                (),
+                {
+                    "text": res.text,
+                    "logprobs": res.logprobs,
+                },
+            )()
+            for res in self.results.outputs
+        ]
+
+
+class FakeChatCompletions:
+    def __init__(self, results):
+        # make it so that this works
+        # Completions = FakeChatCompletions(results)
         # c = [choice.message.content for choice in Completions.choices]
 
         self.results = results[0]
@@ -122,7 +144,7 @@ class LLMEngine:
                 (llm for llm in self.model_list if llm["model_name"] == model_name),
                 None,
             )
-            if llm is None: # model not found in models.yaml
+            if llm is None:  # model not found in models.yaml
                 model = model_name
                 self._model_name = model
                 self._model_name_str = model.split("/")[-1]
@@ -165,18 +187,37 @@ class LLMEngine:
                 self.client = DummyClient()
 
             else:
-                if tokenizer is None:
-                    # we need to self serve
-                    self.client = LLM(model=model)
-                else:
+                import torch
+                from vllm import LLM
+
+                num_gpus = self._config.num_gpus if self._config.num_gpus >=0 else torch.cuda.device_count()
+                if num_gpus == 0:
+                    logger.warning("No GPUs found, using CPU for vLLM.")
                     self.client = LLM(model=model, tokenizer=tokenizer)
+                else:
+                    logger.info(f"Using {num_gpus} GPUs for vLLM.")
+                if "mistral" in model.lower():
+                    self.client = LLM(
+                        model=model,
+                        tokenizer=tokenizer,
+                        tokenizer_mode="mistral",
+                        tensor_parallel_size=num_gpus,
+                    )
+                else:
+                    self.client = LLM(
+                        model=model, tokenizer=tokenizer, tensor_parallel_size=num_gpus
+                    )
 
                 self.hosted_vllm = True
 
                 # raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
+<<<<<<< suhong/need_tokenizer_flag
             if tokenizer is not None and need_tokenizer:
+=======
+            if tokenizer is not None and isinstance(tokenizer, str):
+>>>>>>> main
                 self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
             elif need_tokenizer:
                 self.tokenizer = AutoTokenizer.from_pretrained(model)
@@ -246,6 +287,33 @@ class LLMEngine:
 
         return decorator
 
+    def llm_completion(self, prompt, **kwargs):
+        if self.hosted_vllm:
+            from vllm import SamplingParams
+
+            if "extra_headers" in kwargs.keys():
+                extra_headers = kwargs["extra_headers"]
+                # cast min_p to an integer
+                if "min_p" in extra_headers.keys():
+                    extra_headers["min_p"] = float(extra_headers["min_p"])
+
+                kwargs = {**kwargs, **extra_headers}
+                del kwargs["extra_headers"]
+                del kwargs["model"]
+            sp = SamplingParams(**kwargs)
+
+            output = self.client.generate(
+                [prompt],
+                sampling_params=sp,
+                use_tqdm=False
+            )
+            # will need to post process output
+            output = FakeCompletions(output)
+
+            return output
+        else:
+            return self.client.completions.create(prompt=prompt, **kwargs)
+
     def llm_chat(self, messages, **kwargs):
         if self.hosted_vllm:
             from vllm import SamplingParams
@@ -266,7 +334,7 @@ class LLMEngine:
                 sampling_params=sp,
             )
             # will need to post process output
-            output = FakeCompletions(output)
+            output = FakeChatCompletions(output)
 
             return output
         else:
@@ -336,7 +404,17 @@ class LLMEngine:
         min_p = self._config.min_p
         echo = self._config.echo
         if self.hosted_vllm:
-            raise NotImplementedError
+            return self.llm_completion(
+                prompt=prompt,
+                model=model_name,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                stop=stop,
+                logprobs=logprobs,
+                top_p=top_p,
+                n=n,
+                extra_headers={"min_p": f"{min_p}"},
+            )
 
         if logprobs > 0:
             return self.client.completions.create(
