@@ -23,6 +23,7 @@ class LLMConfig:
     echo: bool = False
     port: int = 8000
     logprobs: int = 0
+    need_tokenizer: bool = False
     tokenizer: Optional[str] = None
     is_instruct: bool = False
     is_reasoning: bool = False
@@ -66,6 +67,12 @@ class LLMConfig:
             type=int,
             help=f"The number of logprobs to present (default: {LLMConfig.logprobs})",
             default=LLMConfig.logprobs,
+        )
+        parser.add_argument(
+            "--need-tokenizer",
+            type=bool,
+            help=f"Whether the model needs a tokenizer (default: {LLMConfig.need_tokenizer})",
+            default=LLMConfig.need_tokenizer,
         )
         parser.add_argument(
             "--tokenizer",

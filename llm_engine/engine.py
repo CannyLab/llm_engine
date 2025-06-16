@@ -75,6 +75,7 @@ class LLMEngine:
             model_name=llm_config.model_name,
             port=llm_config.port,
             tokenizer=llm_config.tokenizer,
+            need_tokenizer=llm_config.need_tokenizer,
         )
 
         logger.info(f"Initialized LLM Engine with model: {self._model_name_str}")
@@ -92,7 +93,7 @@ class LLMEngine:
             logger.error(f"Error loading models.yaml: {e}")
             self.model_list = []
 
-    def prepare_llm(self, model_name: str, port: int, tokenizer: str = None) -> None:
+    def prepare_llm(self, model_name: str, port: int, tokenizer: str = None, need_tokenizer: bool = False) -> None:
         if "localhost" == model_name:  # local serving
             self.client = OpenAI(
                 api_key="EMPTY",
@@ -175,10 +176,12 @@ class LLMEngine:
                 # raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
-            if tokenizer is not None:
+            if tokenizer is not None and need_tokenizer:
                 self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-            else:
+            elif need_tokenizer:
                 self.tokenizer = AutoTokenizer.from_pretrained(model)
+            else:
+                self.tokenizer = None
         except Exception as e:
             logger.error(f"Could not load tokenizer for model: {model}")
             logger.error(f"Using default tokenizer: meta-llama/Llama-3.1-8B-Instruct")
