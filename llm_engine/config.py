@@ -1,11 +1,9 @@
-from dataclasses import dataclass, field
-import os
+from dataclasses import dataclass, field, fields
 import logging
 from typing import (
-    TYPE_CHECKING,
     Optional,
 )
-from openai import OpenAI
+import argparse
 
 from .parser import FlexibleArgumentParser
 
@@ -100,3 +98,16 @@ class LLMConfig:
             default=LLMConfig.num_gpus,
         )
         return parser
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "LLMConfig":
+        """
+        Create LLMConfig from parsed arguments
+        """
+        return cls(
+            **{
+                k: v
+                for k, v in vars(args).items()
+                if k in {f.name for f in fields(cls)}
+            }
+        )
