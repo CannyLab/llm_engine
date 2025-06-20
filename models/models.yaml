@@ -228,6 +228,55 @@ models:
     api_provider: localhost
     is_instruct: true
     is_reasoning: false
+  - model_name: Qwen/Qwen2.5-32B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-32B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-14B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-14B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: Qwen/Qwen2.5-7B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-7B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: Qwen/Qwen2.5-3B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-3B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: Qwen/Qwen2.5-1.5B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: Qwen/Qwen2.5-1.5B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
 
 
   - model_name: Qwen/Qwen2.5-VL-32B-Instruct
