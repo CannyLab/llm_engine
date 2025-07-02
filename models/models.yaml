@@ -87,6 +87,21 @@ models:
   #######
   # Mistral Models
   #######
+  - model_name: mistralai/Mistral-Small-3.1-24B-Base-2503
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: mistralai/Mistral-Small-3.1-24B-Instruct-2503
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+    
+  - model_name: mistralai/Magistral-Small-2506
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
   - model_name: mistralai/Mistral-Small-24B-Base-2501
     api_provider: localhost
     is_instruct: false
@@ -101,8 +116,18 @@ models:
     api_provider: localhost
     is_instruct: false
     is_reasoning: false
-
+  
   - model_name: mistralai/Mistral-7B-Instruct-v0.2
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
+  - model_name: mistralai/Mixtral-8x22B-v0.1
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+    
+  - model_name: mistralai/Mixtral-8x22B-Instruct-v0.1
     api_provider: localhost
     is_instruct: true
     is_reasoning: false
@@ -214,6 +239,36 @@ models:
     is_reasoning: true
 
 ### Qwen
+  - model_name: Qwen/Qwen3-30B-A3B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
+  - model_name: Qwen/Qwen3-32B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
+  - model_name: Qwen/Qwen3-14B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
+  - model_name: Qwen/Qwen3-8B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
+  - model_name: Qwen/Qwen3-4B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+    
+  - model_name: Qwen/Qwen3-1.7B
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+  
   - model_name: Qwen/QwQ-32B
     api_provider: localhost
     is_instruct: true
