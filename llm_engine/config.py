@@ -21,7 +21,7 @@ class LLMConfig:
     echo: bool = False
     port: int = 8000
     logprobs: int = 0
-    need_tokenizer: bool = False
+    need_tokenizer: bool = True
     tokenizer: Optional[str] = None
     is_instruct: bool = False
     is_reasoning: bool = False

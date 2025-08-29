@@ -230,12 +230,13 @@ class LLMEngine:
             else:
                 self.tokenizer = None
         except Exception as e:
-            logger.error(f"Could not load tokenizer for model: {model}")
-            logger.error(f"Using default tokenizer: meta-llama/Llama-3.1-8B-Instruct")
-            # Default to Llama-3.1 tokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                "meta-llama/Llama-3.1-8B-Instruct"
-            )
+            logger.info(f"Could not load tokenizer for model: {model}")
+            self.tokenizer = None
+            # logger.error(f"Using default tokenizer: meta-llama/Llama-3.1-8B-Instruct")
+            # # Default to Llama-3.1 tokenizer
+            # self.tokenizer = AutoTokenizer.from_pretrained(
+            #     "meta-llama/Llama-3.1-8B-Instruct"
+            # )
 
     def reinitialize(self) -> None:
         self.prepare_llm(
@@ -337,18 +338,18 @@ class LLMEngine:
             )
             # will need to post process output
             output = FakeChatCompletions(output)
-
+            
             return output
         else:
             return self.client.chat.completions.create(messages=messages, **kwargs)
 
-    def prompt_llm_auto(
+    def generate(
         self,
         model_prompt,
         system_prompt: str = "",
         n=1,
         return_raw: bool = False,
-    ):
+    ) -> str | list[str] | None:
         output = None
         try:
             if self._is_reasoning:
@@ -545,7 +546,7 @@ class LLMEngine:
         self,
         messages: list,
         n=1,
-    ):
+    ) -> str | list[str] | None:
         assert n >= 1
         model_name = self._model_name
         max_tokens = self._config.max_tokens

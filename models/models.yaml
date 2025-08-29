@@ -2,22 +2,22 @@ models:
   #######
   # Google Models
   #######
-  - model_name: gemini-1.5-flash
+  - model_name: gemini-2.5-flash-lite
     api_provider: google
     is_instruct: true
-    is_reasoning: false
+    is_reasoning: true
 
   - model_name: gemini-2.0-flash
     api_provider: google
     is_instruct: true
     is_reasoning: false
     
-  - model_name: gemini-2.5-flash-preview-04-17
+  - model_name: gemini-2.5-flash
     api_provider: google
     is_instruct: true
     is_reasoning: false
 
-  - model_name: gemini-2.5-pro-preview-03-25
+  - model_name: gemini-2.5-pro
     api_provider: google
     is_instruct: true
     is_reasoning: false
@@ -27,9 +27,35 @@ models:
     is_instruct: true
     is_reasoning: true
 
+  - model_name: google/gemma-3-27b-pt
+    api_provider: google
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: google/gemma-3-27b-it
+    api_provider: google
+    is_instruct: true
+    is_reasoning: false
+
   #######
   # OpenAI Models
   #######
+  - model_name: openai/gpt-oss-20b
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: openai/gpt-oss-120b
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: gpt-4.1-mini
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: false
+
+  
   - model_name: gpt-4o
     api_provider: openai
     is_instruct: true
