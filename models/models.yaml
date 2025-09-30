@@ -97,6 +97,16 @@ models:
     is_instruct: true
     is_reasoning: false
 
+  - model_name: gpt-5
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: true
+
+  - model_name: gpt-5-mini
+    api_provider: openai
+    is_instruct: true
+    is_reasoning: true
+
   #######
   # DeepSeek Models
   #######

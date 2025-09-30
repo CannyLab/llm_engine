@@ -514,7 +514,7 @@ class LLMEngine:
                 {"role": "user", "content": model_prompt},
             ],
             n=n,
-            temperature=self._config.temperature,
+            # temperature=self._config.temperature,
             top_p=self._config.top_p,
         )
 
@@ -534,7 +534,7 @@ class LLMEngine:
             model=model_name,
             messages=messages,
             n=n,
-            temperature=self._config.temperature,
+            # temperature=self._config.temperature,
             top_p=self._config.top_p,
         )
 

@@ -13,7 +13,7 @@ python = "^3.10"
 openai = "1.102.0"
 PyYAML = "6.0.2"
 tqdm = "4.67.1"
-transformers = "4.56.0"
-vllm = "0.10.1.1"
-# vLLM 0.10.1.1 pins Torch 2.7.1 for compatibility
-torch = "2.7.1"
+transformers = ">=4.55.2"
+vllm = "0.10.2"
+# vLLM 0.10.2 pins Torch 2.8.0 for compatibility
+torch = "2.8.0"
