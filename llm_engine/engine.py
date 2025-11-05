@@ -98,15 +98,15 @@ class LLMEngine:
             port=llm_config.port,
             tokenizer=llm_config.tokenizer,
             need_tokenizer=llm_config.need_tokenizer,
+            use_open_router=llm_config.use_open_router,
         )
-
         logger.info(f"Initialized LLM Engine with model: {self._model_name_str}")
         logger.info(f"API Provider: {self._api_provider}")
         logger.info(f"is_instruct: {self._is_instruct}")
         logger.info(f"is_reasoning: {self._is_reasoning}")
 
     def _load_models(self) -> None:
-        models_path = Path(__file__).parent.parent / "models" / "models.yaml"
+        models_path = Path(__file__).parent / "models" / "models.yaml"
         try:
             with open(models_path, "r") as f:
                 models = yaml.safe_load(f)
@@ -121,8 +121,30 @@ class LLMEngine:
         port: int,
         tokenizer: str = None,
         need_tokenizer: bool = False,
+        use_open_router: bool = False,
     ) -> None:
-        if "localhost" == model_name:  # local serving
+        can_access_tokenizer = False
+        if use_open_router:
+            self.client = OpenAI(
+                api_key=os.environ.get("OPENROUTER_API_KEY"),
+                base_url="https://openrouter.ai/api/v1",
+            )
+            llm = next(
+                (llm for llm in self.model_list if llm["model_name"] == model_name),
+                None,
+            )
+            if llm is None:  # model not found in models.yaml
+                raise ValueError(f"Unrecognized model: {model_name}")
+            model = llm["model_name"]
+            can_access_tokenizer = True
+            self._model_name = model
+            self._model_name_str = model.split("/")[-1]
+            self._api_provider = "openrouter"
+            self._is_instruct = llm["is_instruct"]
+            self._is_reasoning = llm["is_reasoning"]
+            
+
+        elif "localhost" == model_name:  # local serving
             self.client = OpenAI(
                 api_key="EMPTY",
                 base_url=f"http://localhost:{port}/v1",  # base_url=f"http://127.0.0.1:{port}/v1",
@@ -162,6 +184,7 @@ class LLMEngine:
                 )
             else:
                 model = llm["model_name"]
+                can_access_tokenizer = True
                 self._model_name = model
                 self._model_name_str = model.split("/")[-1]
                 self._api_provider = llm["api_provider"]
@@ -219,30 +242,29 @@ class LLMEngine:
                     )
 
                 self.hosted_vllm = True
+                can_access_tokenizer = True
 
                 # raise ValueError(f"Invalid API provider: {self._api_provider}")
 
         try:
-            if tokenizer is not None and isinstance(tokenizer, str) and need_tokenizer:
-                self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
-            elif need_tokenizer:
-                self.tokenizer = AutoTokenizer.from_pretrained(model)
-            else:
+            if not can_access_tokenizer or not need_tokenizer:
                 self.tokenizer = None
+            elif tokenizer is not None and isinstance(tokenizer, str):
+                self.tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(model)
         except Exception as e:
             logger.info(f"Could not load tokenizer for model: {model}")
             self.tokenizer = None
-            # logger.error(f"Using default tokenizer: meta-llama/Llama-3.1-8B-Instruct")
-            # # Default to Llama-3.1 tokenizer
-            # self.tokenizer = AutoTokenizer.from_pretrained(
-            #     "meta-llama/Llama-3.1-8B-Instruct"
-            # )
+
 
     def reinitialize(self) -> None:
         self.prepare_llm(
             model_name=self._model_name,
             port=self._config.port,
             tokenizer=self._config.tokenizer,
+            need_tokenizer=self._config.need_tokenizer,
+            use_open_router=self._config.use_open_router,
         )
 
     def update_config(self, **kwargs) -> None:

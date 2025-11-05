@@ -21,11 +21,12 @@ class LLMConfig:
     echo: bool = False
     port: int = 8000
     logprobs: int = 0
-    need_tokenizer: bool = True
+    need_tokenizer: bool = False
     tokenizer: Optional[str] = None
     is_instruct: bool = False
     is_reasoning: bool = False
     num_gpus: int = -1
+    use_open_router: bool = False
 
     @staticmethod
     def add_cli_args(parser: FlexibleArgumentParser) -> FlexibleArgumentParser:
@@ -96,6 +97,12 @@ class LLMConfig:
             type=int,
             help=f"Number of GPUs to use (default: {LLMConfig.num_gpus})",
             default=LLMConfig.num_gpus,
+        )
+        parser.add_argument(
+            "--use-open-router",
+            type=bool,
+            help=f"Whether to use OpenRouter for model serving (default: {LLMConfig.use_open_router})",
+            default=LLMConfig.use_open_router,
         )
         return parser
 

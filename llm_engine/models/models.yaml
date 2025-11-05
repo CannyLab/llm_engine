@@ -55,7 +55,6 @@ models:
     is_instruct: true
     is_reasoning: false
 
-  
   - model_name: gpt-4o
     api_provider: openai
     is_instruct: true
