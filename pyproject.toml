@@ -10,10 +10,12 @@ authors = ["CannyLab <mkang@cs.berkeley.edu>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-openai = "1.102.0"
+openai = "2.33.0"
 PyYAML = "6.0.2"
 tqdm = "4.67.1"
-transformers = ">=4.56.2"
-vllm = "0.10.2"
-# vLLM 0.10.2 pins Torch 2.8.0 for compatibility
-torch = "2.8.0"
+transformers = "4.56.0"
+vllm = "0.20.0"
+# vLLM 0.20.0 pins the Torch package family for compatibility
+torch = "2.11.0"
+torchaudio = "2.11.0"
+torchvision = "0.26.0"

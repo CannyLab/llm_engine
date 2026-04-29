@@ -104,6 +104,7 @@ class LLMEngine:
         logger.info(f"API Provider: {self._api_provider}")
         logger.info(f"is_instruct: {self._is_instruct}")
         logger.info(f"is_reasoning: {self._is_reasoning}")
+        logger.info(f"disable_thinking: {self._config.disable_thinking}")
 
     def _load_models(self) -> None:
         models_path = Path(__file__).parent / "models" / "models.yaml"
@@ -114,6 +115,13 @@ class LLMEngine:
         except Exception as e:
             logger.error(f"Error loading models.yaml: {e}")
             self.model_list = []
+
+    def _offline_vllm_tensor_parallel_size(self) -> int:
+        import torch
+
+        if self._config.num_gpus >= 0:
+            return self._config.num_gpus
+        return torch.cuda.device_count()
 
     def prepare_llm(
         self,
@@ -130,15 +138,14 @@ class LLMEngine:
                 base_url="https://openrouter.ai/api/v1",
             )
             llm = next(
-                (llm for llm in self.model_list if llm["model_name"] == model_name),
+                (llm for llm in self.model_list if llm["model_name"] == model_name or llm["model_name"] == model_name.split("/")[-1]),
                 None,
             )
             if llm is None:  # model not found in models.yaml
                 raise ValueError(f"Unrecognized model: {model_name}")
-            model = llm["model_name"]
             can_access_tokenizer = True
-            self._model_name = model
-            self._model_name_str = model.split("/")[-1]
+            self._model_name = model_name
+            self._model_name_str = model_name.split("/")[-1]
             self._api_provider = "openrouter"
             self._is_instruct = llm["is_instruct"]
             self._is_reasoning = llm["is_reasoning"]
@@ -216,30 +223,27 @@ class LLMEngine:
                 self.client = DummyClient()
 
             else:
-                import torch
                 from vllm import LLM
 
-                num_gpus = (
-                    self._config.num_gpus
-                    if self._config.num_gpus >= 0
-                    else torch.cuda.device_count()
-                )
+                num_gpus = self._offline_vllm_tensor_parallel_size()
                 if num_gpus == 0:
                     logger.warning("No GPUs found, using CPU for vLLM.")
                     self.client = LLM(model=model, tokenizer=tokenizer)
                 else:
                     logger.info(f"Using {num_gpus} GPUs for vLLM.")
-                if "mistral" in model.lower():
-                    self.client = LLM(
-                        model=model,
-                        tokenizer=tokenizer,
-                        tokenizer_mode="mistral",
-                        tensor_parallel_size=num_gpus,
-                    )
-                else:
-                    self.client = LLM(
-                        model=model, tokenizer=tokenizer, tensor_parallel_size=num_gpus
-                    )
+                    if "mistral" in model.lower():
+                        self.client = LLM(
+                            model=model,
+                            tokenizer=tokenizer,
+                            tokenizer_mode="mistral",
+                            tensor_parallel_size=num_gpus,
+                        )
+                    else:
+                        self.client = LLM(
+                            model=model,
+                            tokenizer=tokenizer,
+                            tensor_parallel_size=num_gpus,
+                        )
 
                 self.hosted_vllm = True
                 can_access_tokenizer = True
@@ -452,7 +456,7 @@ class LLMEngine:
                 top_p=top_p,
                 echo=echo,
                 n=n,
-                top_logprobs=logprobs,
+                #top_logprobs=logprobs,
                 extra_headers={"min_p": f"{min_p}"},
             )
         else:
@@ -528,6 +532,7 @@ class LLMEngine:
     ):
         assert n >= 1
         model_name = self._model_name
+        max_tokens = self._config.max_tokens
 
         return self.llm_chat(
             model=model_name,
@@ -535,9 +540,11 @@ class LLMEngine:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": model_prompt},
             ],
+            max_tokens=max_tokens,
             n=n,
             # temperature=self._config.temperature,
             top_p=self._config.top_p,
+            **self._reasoning_request_kwargs(),
         )
 
     @retry_with_exponential_backoff(
@@ -551,14 +558,32 @@ class LLMEngine:
     ):
         assert n >= 1
         model_name = self._model_name
+        max_tokens = self._config.max_tokens
 
         return self.llm_chat(
             model=model_name,
             messages=messages,
+            max_tokens=max_tokens,
             n=n,
             # temperature=self._config.temperature,
             top_p=self._config.top_p,
+            **self._reasoning_request_kwargs(),
         )
+
+    def _reasoning_request_kwargs(self) -> dict[str, Any]:
+        if self.hosted_vllm or not self._config.disable_thinking:
+            return {}
+        if self._api_provider in {"google", "openai", "anthropic"}:
+            return {"reasoning_effort": "none"}
+        if self._api_provider == "localhost":
+            return {
+                "extra_body": {
+                    "chat_template_kwargs": {
+                        "enable_thinking": False,
+                    }
+                }
+            }
+        return {}
 
     @retry_with_exponential_backoff(
         max_retries=20,
@@ -647,6 +672,7 @@ class LLMEngine:
             f"api_provider='{self._api_provider}', "
             f"is_instruct={self._is_instruct}, "
             f"is_reasoning={self._is_reasoning}, "
+            f"disable_thinking={self._config.disable_thinking}, "
             f"max_tokens={self._config.max_tokens}, "
             f"temperature={self._config.temperature}, "
             f"top_p={self._config.top_p}, "
@@ -666,6 +692,7 @@ class LLMEngine:
             "stop",
             "logprobs",
             "echo",
+            "disable_thinking",
         }
         if name in config_attrs:
             return getattr(self._config, name)
@@ -696,6 +723,14 @@ class LLMEngine:
     def is_reasoning(self, value: bool) -> None:
         self._is_reasoning = value
         self._config.is_reasoning = value
+
+    @property
+    def disable_thinking(self) -> bool:
+        return self._config.disable_thinking
+
+    @disable_thinking.setter
+    def disable_thinking(self, value: bool) -> None:
+        self._config.disable_thinking = value
 
     @property
     def config(self) -> LLMConfig:

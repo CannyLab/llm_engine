@@ -25,6 +25,7 @@ class LLMConfig:
     tokenizer: Optional[str] = None
     is_instruct: bool = False
     is_reasoning: bool = False
+    disable_thinking: bool = True
     num_gpus: int = -1
     use_open_router: bool = False
 
@@ -93,9 +94,15 @@ class LLMConfig:
             default=LLMConfig.is_reasoning,
         )
         parser.add_argument(
+            "--disable-thinking",
+            type=bool,
+            help=f"Whether to disable thinking for reasoning calls when supported (default: {LLMConfig.disable_thinking})",
+            default=LLMConfig.disable_thinking,
+        )
+        parser.add_argument(
             "--num-gpus",
             type=int,
-            help=f"Number of GPUs to use (default: {LLMConfig.num_gpus})",
+            help=f"Number of GPUs to use for offline vLLM; -1 uses all visible GPUs and 0 forces CPU (default: {LLMConfig.num_gpus})",
             default=LLMConfig.num_gpus,
         )
         parser.add_argument(

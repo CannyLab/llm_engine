@@ -1,5 +1,12 @@
 models:
   #######
+  # Openrouter Models
+  #######
+  - model_name: gemini-2.0-flash-001
+    api_provider: openrouter
+    is_instruct: true
+    is_reasoning: false
+  #######
   # Google Models
   #######
   - model_name: gemini-2.5-flash-lite
@@ -15,7 +22,7 @@ models:
   - model_name: gemini-2.5-flash
     api_provider: google
     is_instruct: true
-    is_reasoning: false
+    is_reasoning: true
 
   - model_name: gemini-2.5-pro
     api_provider: google
@@ -230,6 +237,16 @@ models:
     is_instruct: true
     is_reasoning: false
 
+  - model_name: meta-llama/Llama-3.1-8B
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
+
+  - model_name: meta-llama/Llama-3.1-8B-Instruct
+    api_provider: localhost
+    is_instruct: true
+    is_reasoning: false
+
   - model_name: meta-llama/Llama-3.1-70B
     api_provider: localhost
     is_instruct: false
@@ -288,11 +305,21 @@ models:
     api_provider: localhost
     is_instruct: true
     is_reasoning: true
+
+  - model_name: Qwen/Qwen3-14B-Base
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
     
   - model_name: Qwen/Qwen3-8B
     api_provider: localhost
     is_instruct: true
     is_reasoning: true
+    
+  - model_name: Qwen/Qwen3-8B-Base
+    api_provider: localhost
+    is_instruct: false
+    is_reasoning: false
     
   - model_name: Qwen/Qwen3-4B
     api_provider: localhost
